@@ -57,9 +57,9 @@ jobs:
               "set -e",
               "aws ecr get-login-password --region '"$AWS_REGION"' | docker login --username AWS --password-stdin '"$ECR_REGISTRY"'",
               "docker pull '"$IMAGE"'",
-              "docker run --rm --env-file '"$ENV_FILE"' '"$IMAGE"' alembic upgrade head",
+              "docker run --rm --network host --env-file '"$ENV_FILE"' '"$IMAGE"' alembic upgrade head",
               "docker stop '"$CONTAINER_NAME"' || true && docker rm '"$CONTAINER_NAME"' || true",
-              "docker run -d --name '"$CONTAINER_NAME"' --restart unless-stopped --env-file '"$ENV_FILE"' -p 8000:8000 '"$IMAGE"'",
+              "docker run -d --name '"$CONTAINER_NAME"' --restart unless-stopped --network host --env-file '"$ENV_FILE"' '"$IMAGE"'",
               "for i in 1 2 3 4 5 6; do curl -sf http://localhost:8000/docs && echo \"Health check passed\" && exit 0; echo \"Attempt $i failed, waiting 5s...\"; sleep 5; done; echo \"Health check failed\"; exit 1",
               "docker image prune -af --filter until=168h"
             ]' \
