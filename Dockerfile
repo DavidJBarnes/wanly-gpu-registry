@@ -23,7 +23,8 @@ COPY app/ app/
 COPY alembic/ alembic/
 COPY alembic.ini .
 
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH="/app"
 
 USER appuser
 
