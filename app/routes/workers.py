@@ -14,13 +14,25 @@ router = APIRouter()
 
 @router.post("/workers", response_model=WorkerResponse, status_code=201)
 async def register_worker(body: WorkerRegister, db: AsyncSession = Depends(get_db)):
-    worker = Worker(
-        friendly_name=body.friendly_name,
-        hostname=body.hostname,
-        ip_address=body.ip_address,
-        comfyui_running=body.comfyui_running,
+    # Upsert: if friendly_name already exists, reclaim that row
+    result = await db.execute(
+        select(Worker).where(Worker.friendly_name == body.friendly_name)
     )
-    db.add(worker)
+    worker = result.scalar_one_or_none()
+    if worker:
+        worker.hostname = body.hostname
+        worker.ip_address = body.ip_address
+        worker.comfyui_running = body.comfyui_running
+        worker.status = "online-idle"
+        worker.last_heartbeat = datetime.now(timezone.utc)
+    else:
+        worker = Worker(
+            friendly_name=body.friendly_name,
+            hostname=body.hostname,
+            ip_address=body.ip_address,
+            comfyui_running=body.comfyui_running,
+        )
+        db.add(worker)
     await db.commit()
     await db.refresh(worker)
     return worker
