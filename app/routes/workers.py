@@ -49,6 +49,21 @@ async def deregister_worker(
     await db.commit()
 
 
+@router.post("/workers/{worker_id}/drain", response_model=WorkerResponse)
+async def drain_worker(
+    worker_id: uuid.UUID, db: AsyncSession = Depends(get_db)
+):
+    worker = await db.get(Worker, worker_id)
+    if not worker:
+        raise HTTPException(status_code=404, detail="Worker not found")
+    if worker.status == "offline":
+        raise HTTPException(status_code=400, detail="Cannot drain an offline worker")
+    worker.status = "draining"
+    await db.commit()
+    await db.refresh(worker)
+    return worker
+
+
 @router.post("/workers/{worker_id}/heartbeat", response_model=WorkerResponse)
 async def heartbeat(
     worker_id: uuid.UUID,
@@ -62,6 +77,7 @@ async def heartbeat(
     worker.comfyui_running = body.comfyui_running
     if worker.status == "offline":
         worker.status = "online-idle"
+    # Don't reset "draining" status — daemon needs to see it
     await db.commit()
     await db.refresh(worker)
     return worker
