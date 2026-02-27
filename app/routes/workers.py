@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models import Worker
-from app.schemas import WorkerHeartbeat, WorkerRegister, WorkerResponse, WorkerStatusUpdate
+from app.schemas import WorkerHeartbeat, WorkerRegister, WorkerRename, WorkerResponse, WorkerStatusUpdate
 
 router = APIRouter()
 
@@ -78,6 +78,21 @@ async def heartbeat(
     if worker.status == "offline":
         worker.status = "online-idle"
     # Don't reset "draining" status — daemon needs to see it
+    await db.commit()
+    await db.refresh(worker)
+    return worker
+
+
+@router.patch("/workers/{worker_id}/friendly_name", response_model=WorkerResponse)
+async def rename_worker(
+    worker_id: uuid.UUID,
+    body: WorkerRename,
+    db: AsyncSession = Depends(get_db),
+):
+    worker = await db.get(Worker, worker_id)
+    if not worker:
+        raise HTTPException(status_code=404, detail="Worker not found")
+    worker.friendly_name = body.friendly_name.strip()
     await db.commit()
     await db.refresh(worker)
     return worker
