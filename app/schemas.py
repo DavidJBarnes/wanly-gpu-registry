@@ -15,6 +15,10 @@ class WorkerHeartbeat(BaseModel):
     comfyui_running: bool
 
 
+class WorkerRename(BaseModel):
+    friendly_name: str
+
+
 class WorkerStatusUpdate(BaseModel):
     status: str
 
