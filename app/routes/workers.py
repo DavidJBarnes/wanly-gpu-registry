@@ -75,6 +75,8 @@ async def heartbeat(
         raise HTTPException(status_code=404, detail="Worker not found")
     worker.last_heartbeat = datetime.now(timezone.utc)
     worker.comfyui_running = body.comfyui_running
+    if body.gpu_stats is not None:
+        worker.gpu_stats = body.gpu_stats
     if worker.status == "offline":
         worker.status = "online-idle"
     # Don't reset "draining" status — daemon needs to see it
