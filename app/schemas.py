@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime
 
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -13,6 +15,7 @@ class WorkerRegister(BaseModel):
 
 class WorkerHeartbeat(BaseModel):
     comfyui_running: bool
+    gpu_stats: dict[str, Any] | None = None
 
 
 class WorkerRename(BaseModel):
@@ -30,6 +33,7 @@ class WorkerResponse(BaseModel):
     ip_address: str
     status: str
     comfyui_running: bool
+    gpu_stats: dict[str, Any] | None = None
     last_heartbeat: datetime
     registered_at: datetime
     updated_at: datetime
