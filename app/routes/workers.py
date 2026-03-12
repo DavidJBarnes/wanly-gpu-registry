@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models import Worker
-from app.schemas import WorkerHeartbeat, WorkerRegister, WorkerRename, WorkerResponse, WorkerStatusUpdate
+from app.schemas import WorkerDrain, WorkerHeartbeat, WorkerRegister, WorkerRename, WorkerResponse, WorkerStatusUpdate
 
 router = APIRouter()
 
@@ -24,6 +24,7 @@ async def register_worker(body: WorkerRegister, db: AsyncSession = Depends(get_d
         worker.ip_address = body.ip_address
         worker.comfyui_running = body.comfyui_running
         worker.status = "online-idle"
+        worker.drain_after_jobs = None
         worker.last_heartbeat = datetime.now(timezone.utc)
     else:
         worker = Worker(
@@ -51,14 +52,36 @@ async def deregister_worker(
 
 @router.post("/workers/{worker_id}/drain", response_model=WorkerResponse)
 async def drain_worker(
-    worker_id: uuid.UUID, db: AsyncSession = Depends(get_db)
+    worker_id: uuid.UUID,
+    body: WorkerDrain | None = None,
+    db: AsyncSession = Depends(get_db),
 ):
     worker = await db.get(Worker, worker_id)
     if not worker:
         raise HTTPException(status_code=404, detail="Worker not found")
     if worker.status == "offline":
         raise HTTPException(status_code=400, detail="Cannot drain an offline worker")
-    worker.status = "draining"
+    after_jobs = body.after_jobs if body else None
+    if after_jobs and after_jobs > 0:
+        worker.drain_after_jobs = after_jobs
+    else:
+        worker.status = "draining"
+        worker.drain_after_jobs = None
+    await db.commit()
+    await db.refresh(worker)
+    return worker
+
+
+@router.delete("/workers/{worker_id}/drain", response_model=WorkerResponse)
+async def cancel_drain(
+    worker_id: uuid.UUID, db: AsyncSession = Depends(get_db)
+):
+    worker = await db.get(Worker, worker_id)
+    if not worker:
+        raise HTTPException(status_code=404, detail="Worker not found")
+    worker.drain_after_jobs = None
+    if worker.status == "draining":
+        worker.status = "online-idle"
     await db.commit()
     await db.refresh(worker)
     return worker
@@ -116,6 +139,11 @@ async def update_status(
     if not worker:
         raise HTTPException(status_code=404, detail="Worker not found")
     worker.status = body.status
+    if body.status == "online-idle" and worker.drain_after_jobs is not None:
+        worker.drain_after_jobs -= 1
+        if worker.drain_after_jobs <= 0:
+            worker.status = "draining"
+            worker.drain_after_jobs = None
     await db.commit()
     await db.refresh(worker)
     return worker
