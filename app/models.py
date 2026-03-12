@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -37,6 +37,9 @@ class Worker(Base):
     )
     gpu_stats: Mapped[dict | None] = mapped_column(
         JSONB, nullable=True, default=None
+    )
+    drain_after_jobs: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, default=None
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

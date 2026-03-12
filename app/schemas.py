@@ -26,6 +26,10 @@ class WorkerStatusUpdate(BaseModel):
     status: str
 
 
+class WorkerDrain(BaseModel):
+    after_jobs: int | None = None
+
+
 class WorkerResponse(BaseModel):
     id: uuid.UUID
     friendly_name: str
@@ -34,6 +38,7 @@ class WorkerResponse(BaseModel):
     status: str
     comfyui_running: bool
     gpu_stats: dict[str, Any] | None = None
+    drain_after_jobs: int | None = None
     last_heartbeat: datetime
     registered_at: datetime
     updated_at: datetime
