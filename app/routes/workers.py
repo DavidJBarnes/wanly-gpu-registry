@@ -138,6 +138,8 @@ async def update_status(
     worker = await db.get(Worker, worker_id)
     if not worker:
         raise HTTPException(status_code=404, detail="Worker not found")
+    if worker.status == "draining":
+        return worker
     worker.status = body.status
     if body.status == "online-idle" and worker.drain_after_jobs is not None:
         worker.drain_after_jobs -= 1
