@@ -103,7 +103,15 @@ async def heartbeat(
     worker.sd_scripts = body.sd_scripts
     if worker.status == "offline":
         worker.status = "online-idle"
-    # Don't reset "draining" status — daemon needs to see it
+    # If sd-scripts is actively training, worker can't be idle
+    if worker.status not in ("offline", "draining"):
+        sd_training = (
+            body.sd_scripts.get("sd_scripts_training", False)
+            if body.sd_scripts
+            else False
+        )
+        if sd_training:
+            worker.status = "online-busy"
     await db.commit()
     await db.refresh(worker)
     return worker
