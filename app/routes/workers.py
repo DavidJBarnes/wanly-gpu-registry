@@ -100,6 +100,7 @@ async def heartbeat(
     worker.comfyui_running = body.comfyui_running
     if body.gpu_stats is not None:
         worker.gpu_stats = body.gpu_stats
+    worker.sd_scripts = body.sd_scripts
     if worker.status == "offline":
         worker.status = "online-idle"
     # Don't reset "draining" status — daemon needs to see it
