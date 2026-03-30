@@ -38,6 +38,9 @@ class Worker(Base):
     gpu_stats: Mapped[dict | None] = mapped_column(
         JSONB, nullable=True, default=None
     )
+    sd_scripts: Mapped[dict | None] = mapped_column(
+        JSONB, nullable=True, default=None
+    )
     drain_after_jobs: Mapped[int | None] = mapped_column(
         Integer, nullable=True, default=None
     )

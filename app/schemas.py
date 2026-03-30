@@ -16,6 +16,7 @@ class WorkerRegister(BaseModel):
 class WorkerHeartbeat(BaseModel):
     comfyui_running: bool
     gpu_stats: dict[str, Any] | None = None
+    sd_scripts: dict[str, Any] | None = None
 
 
 class WorkerRename(BaseModel):
@@ -38,6 +39,7 @@ class WorkerResponse(BaseModel):
     status: str
     comfyui_running: bool
     gpu_stats: dict[str, Any] | None = None
+    sd_scripts: dict[str, Any] | None = None
     drain_after_jobs: int | None = None
     last_heartbeat: datetime
     registered_at: datetime
