@@ -101,6 +101,7 @@ async def heartbeat(
     if body.gpu_stats is not None:
         worker.gpu_stats = body.gpu_stats
     worker.sd_scripts = body.sd_scripts
+    worker.a1111 = body.a1111
     if worker.status == "offline":
         worker.status = "online-idle"
     # If sd-scripts is actively training, worker can't be idle
