@@ -1,3 +1,5 @@
+[DEPRECATED] This functionality has been rolled directly into the wanly-api for simplicity.
+
 # wanly-gpu-registry
 
 Worker registration and health tracking service for the Wanly platform. Tracks GPU worker status via heartbeats and exposes a REST API.
